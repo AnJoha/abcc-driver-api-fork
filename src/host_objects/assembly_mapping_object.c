@@ -268,21 +268,46 @@ static void InstanceCommand( ABP_MsgType* psNewMessage )
       default:
       {
          UINT16 iAdisPerAttribute;
+         UINT16 iMaxAdiMaps;
          UINT16 iMaxAdisForThisAttribute;
          UINT16 iIndex;
          UINT16 iStartIndex;
          UINT16 iEndIndex;
          UINT8  bHighestAttribute;
 
+#if ASM_IA_MAX_NUM_ADI_MAPS_ENABLE
+         /*
+         ** Use the instance's own mapping limit, but never more than the
+         ** global maximum.
+         */
+         iMaxAdiMaps = psInstance->iMaxNumAdiMaps;
+
+         if( iMaxAdiMaps > ASM_MAX_ADI_MAPS_PER_INSTANCE )
+         {
+            iMaxAdiMaps = ASM_MAX_ADI_MAPS_PER_INSTANCE;
+         }
+#else
+         iMaxAdiMaps = ASM_MAX_ADI_MAPS_PER_INSTANCE;
+#endif
+
+         if( iMaxAdiMaps == 0 )
+         {
+            /*
+            ** This instance can't hold any ADI maps.
+            */
+            ABP_SetMsgErrorResponse( psNewMessage, 1, ABP_ERR_INV_CMD_EXT_0 );
+            break;
+         }
+
          iAdisPerAttribute = ( ABCC_GetMessageChannelSize() / ABP_BITS32_SIZEOF ) - 1;
-         bHighestAttribute = (UINT8)( ( ( ASM_MAX_ADI_MAPS_PER_INSTANCE - 1 ) / iAdisPerAttribute ) + ABP_ASM_IA_ADI_MAP_XX );
+         bHighestAttribute = (UINT8)( ( ( iMaxAdiMaps - 1 ) / iAdisPerAttribute ) + ABP_ASM_IA_ADI_MAP_XX );
 
          if( ( ABCC_GetMsgCmdExt0( psNewMessage ) < ABP_ASM_IA_ADI_MAP_XX ) ||
              ( ABCC_GetMsgCmdExt0( psNewMessage ) >= ABP_ASM_IA_NAME ) ||
              ( ABCC_GetMsgCmdExt0( psNewMessage ) > bHighestAttribute ) )
          {
             /*
-            ** This attribute does not exist.
+            ** This attribute does not exists.
             */
             ABP_SetMsgErrorResponse( psNewMessage, 1, ABP_ERR_INV_CMD_EXT_0 );
             break;
@@ -300,7 +325,7 @@ static void InstanceCommand( ABP_MsgType* psNewMessage )
          */
          if( ABCC_GetMsgCmdExt0( psNewMessage ) == bHighestAttribute )
          {
-            iMaxAdisForThisAttribute = ASM_MAX_ADI_MAPS_PER_INSTANCE -
+            iMaxAdisForThisAttribute = iMaxAdiMaps -
                ( ( bHighestAttribute - ABP_ASM_IA_ADI_MAP_XX ) * iAdisPerAttribute );
          }
          else
