@@ -15,6 +15,7 @@
 */
 
 #include <stdio.h>
+#include <inttypes.h>
 #include "abcc_types.h"
 #include "abcc_api_config.h"
 #include "abcc_api_network_settings.h"
@@ -704,7 +705,7 @@ static void UserInitPrepDone( const ABCC_CmdSeqResultType eSeqResult, void* pxUs
       break;
    }
 }
-void ABCC_API_UserInitComplete()
+void ABCC_API_UserInitComplete( void )
 {
       appl_fUserInitPrepDone = TRUE;
       ABCC_UserInitComplete();
@@ -824,7 +825,7 @@ ABCC_ErrorCodeType ABCC_API_Run( void )
       {
          appl_eAbccHandlerState = ABCC_API_WAIT_FW_UPDATE;
          ABCC_LOG_INFO( "ABCC did not start within the expected time. Assume firmware update is ongoing. \n" \
-                           "Now waiting an additional %lu ms\n", ABCC_API_FW_UPGRADE_STARTUP_TIME_MS );
+                           "Now waiting an additional %" PRIu32 " ms\n", ABCC_API_FW_UPGRADE_STARTUP_TIME_MS );
          ABCC_WaitForFwUpdate( ABCC_API_FW_UPGRADE_STARTUP_TIME_MS );
       }
 #endif
@@ -863,8 +864,7 @@ ABCC_ErrorCodeType ABCC_API_Run( void )
       */
 
 #if SYNC_OBJ_ENABLE
-#error "Sync Object is not supported in this version of the ABCC API"
-      if( SYNC_GetMode() == SYNC_MODE_NONSYNCHRONOUS )
+      if( ABCC_CbfSyncObjSyncMode_Get() == 0 )
       {
          ABCC_TriggerWrPdUpdate();
       }
@@ -982,8 +982,8 @@ BOOL ABCC_API_SetBaudrate( UINT8 bSwitchValue )
       appl_bNwBaudRate = bSwitchValue;
       ABCC_CmdSeqAdd( appl_asBaudRateChangedCmdSeq, UpdateBaudRateDone, NULL, NULL );
    }
-   return TRUE;
    appl_fSetBaudRate = TRUE;
+   return TRUE;
 }
 
 void ABCC_API_SetCommSettings( ABCC_API_CommSettingType eCommSettings1,
@@ -1025,6 +1025,13 @@ void ABCC_API_Restart( void )
 {
    appl_eAbccHandlerState = ABCC_API_RESTART;
 }
+
+#if ABCC_CFG_SPI_DYNAMIC_MSG_FRAG_LEN
+ABCC_ErrorCodeType ABCC_API_SetMsgFragSize( const UINT16 iReqMsgFragSize )
+{
+   return( ABCC_SetMsgFragSize( iReqMsgFragSize ) );
+}
+#endif // ABCC_CFG_SPI_DYNAMIC_MSG_FRAG_LEN
 
 ABP_AnbStateType ABCC_API_AnbState( void )
 {
@@ -1093,8 +1100,8 @@ void ABCC_CbfWdTimeout( void )
       if( ABCC_WaitForFwUpdate( ABCC_API_FW_UPGRADE_STARTUP_TIME_MS ) )
       {
          appl_eAbccHandlerState = ABCC_API_WAIT_FW_UPDATE;
-         ABCC_LOG_INFO( "Failed to establish communication within the expected time. Assume firmware" \
-                        "update is ongoing. Now waiting an additional %lu ms\n", ABCC_API_FW_UPGRADE_STARTUP_TIME_MS );
+         ABCC_LOG_INFO( "Failed to establish communication within the expected time. Assume firmware " \
+                        "update is ongoing. Now waiting an additional %" PRIu32 " ms\n", ABCC_API_FW_UPGRADE_STARTUP_TIME_MS );
       }
    }
 #endif
@@ -1106,7 +1113,6 @@ void ABCC_CbfWdTimeoutRecovered( void )
 }
 
 #if ABCC_CFG_SYNC_ENABLED
-#error "Sync Object is not supported in this version of the ABCC API"
 void ABCC_CbfSyncIsr( void )
 {
    /*
@@ -1115,6 +1121,22 @@ void ABCC_CbfSyncIsr( void )
    ABCC_API_CbfSyncIsr();
 }
 #endif
+
+ABP_AppStatusType ABCC_API_GetAppStatus( void )
+{
+   /*
+   ** Get the application status
+   */
+   return ABCC_GetAppStatus();
+}
+
+void ABCC_API_SetAppStatus( ABP_AppStatusType eAppStatus )
+{
+   /*
+   ** Set the application status
+   */
+   ABCC_SetAppStatus( eAppStatus );
+}
 
 #if ABCC_CFG_INT_ENABLED
 void ABCC_CbfEvent( UINT16 iEvents )
