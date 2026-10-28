@@ -690,8 +690,8 @@ void ASM_Init( void )
           ABP_ASM_IA_DESC_DYNAMIC )
       {
          ABCC_LOG_ERROR( ABCC_EC_BAD_ASSEMBLY_INSTANCE,
-            (UINT32)iIndex,
-            "Assembly instance %" PRIu16 " is defined as dynamic although not supported\n", iIndex );
+   (UINT32)( iIndex + 1 ),
+            "Assembly instance %" PRIu16 " is defined as dynamic although not supported\n", iIndex + 1 );
       }
 
       ppsInstance++;
