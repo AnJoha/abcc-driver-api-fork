@@ -273,14 +273,14 @@ static void InstanceCommand( ABP_MsgType* psNewMessage )
          UINT8  bHighestAttribute;
 
          iAdisPerAttribute = ( ABCC_GetMessageChannelSize() / ABP_BITS32_SIZEOF ) - 1;
-         bHighestAttribute = (UINT8)( ( ASM_MAX_ADI_MAPS_PER_INSTANCE / iAdisPerAttribute ) + ABP_ASM_IA_ADI_MAP_XX );
+         bHighestAttribute = (UINT8)( ( ( ASM_MAX_ADI_MAPS_PER_INSTANCE - 1 ) / iAdisPerAttribute ) + ABP_ASM_IA_ADI_MAP_XX );
 
          if( ( ABCC_GetMsgCmdExt0( psNewMessage ) < ABP_ASM_IA_ADI_MAP_XX ) ||
              ( ABCC_GetMsgCmdExt0( psNewMessage ) >= ABP_ASM_IA_NAME ) ||
              ( ABCC_GetMsgCmdExt0( psNewMessage ) > bHighestAttribute ) )
          {
             /*
-            ** This attribute does not exists.
+            ** This attribute does not exist.
             */
             ABP_SetMsgErrorResponse( psNewMessage, 1, ABP_ERR_INV_CMD_EXT_0 );
             break;
@@ -298,7 +298,8 @@ static void InstanceCommand( ABP_MsgType* psNewMessage )
          */
          if( ABCC_GetMsgCmdExt0( psNewMessage ) == bHighestAttribute )
          {
-            iMaxAdisForThisAttribute = ASM_MAX_ADI_MAPS_PER_INSTANCE % iAdisPerAttribute;
+            iMaxAdisForThisAttribute = ASM_MAX_ADI_MAPS_PER_INSTANCE -
+               ( ( bHighestAttribute - ABP_ASM_IA_ADI_MAP_XX ) * iAdisPerAttribute );
          }
          else
          {
