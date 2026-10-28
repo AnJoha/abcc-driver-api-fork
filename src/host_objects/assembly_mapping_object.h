@@ -52,4 +52,25 @@ EXTFUNC void ASM_Init( void );
 */
 EXTFUNC void ASM_ProcessCmdMsg( ABP_MsgType* psNewMessage );
 
+/*------------------------------------------------------------------------------
+** Copies the current data of all ADIs mapped in an assembly mapping instance
+** to a buffer, packed the same way as the Read_Assembly_Data command response.
+**------------------------------------------------------------------------------
+** Arguments:
+**    iInstance     - Assembly mapping instance number (1 to the number of
+**                    instances returned by ABCC_API_CbfGetNumAsmInstances()).
+**    pxBuffer      - Pointer to the destination buffer. The caller must make
+**                    sure the buffer can hold the complete mapped data.
+**    piOctetOffset - Pointer to the octet offset in pxBuffer where writing
+**                    starts. On return it is advanced past the written data.
+**
+** Returns:
+**    TRUE  - Data was written to the buffer.
+**    FALSE - The instance number is invalid. Nothing was written.
+**------------------------------------------------------------------------------
+*/
+EXTFUNC BOOL ASM_GetData( UINT16 iInstance,
+                          void* pxBuffer,
+                          UINT16* piOctetOffset );
+
 #endif  /* inclusion lock */
