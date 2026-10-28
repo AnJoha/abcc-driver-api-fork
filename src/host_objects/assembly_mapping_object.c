@@ -599,6 +599,11 @@ static void ObjectCommand( ABP_MsgType* psNewMessage )
             if( ( (*ppsInstance)->lDescriptor & ( ABP_ASM_IA_DESC_WRITE_READ_MASK | ABP_ASM_IA_DESC_PD_MAPPABLE_MASK ) ) ==
                 ( ABP_ASM_IA_DESC_WRITE | ABP_ASM_IA_DESC_PD_MAPPABLE ) )
             {
+               if( ( iRspSize + ABP_UINT16_SIZEOF ) > ABCC_GetMaxMessageSize() )
+               {
+                  break;
+               }
+
                ABCC_SetMsgData16( psNewMessage,
                                   iIndex + 1,
                                   iRspSize );
@@ -607,6 +612,22 @@ static void ObjectCommand( ABP_MsgType* psNewMessage )
             }
 
             ppsInstance++;
+         }
+
+         /*
+         ** The loop only exits early when the next instance number doesn't
+         ** fit in the response message.
+         */
+         if( iIndex < ABCC_API_CbfGetNumAsmInstances() )
+         {
+            ABCC_LOG_WARNING( ABCC_EC_BAD_ASSEMBLY_INSTANCE, (UINT32)ABCC_GetMsgInstance( psNewMessage ),
+                              "Too many write PD mappable assembly instances for the current configuration of " \
+                              "ABCC_CFG_MAX_MSG_SIZE (%d) or message channel size too small (%" PRIu16 ")\n",
+                              ABCC_CFG_MAX_MSG_SIZE,
+                              ABCC_GetMessageChannelSize() );
+
+            ABP_SetMsgErrorResponse( psNewMessage, 1, ABP_ERR_MSG_CHANNEL_TOO_SMALL );
+            break;
          }
 
          ABP_SetMsgResponse( psNewMessage,
@@ -629,6 +650,11 @@ static void ObjectCommand( ABP_MsgType* psNewMessage )
             if( ( (*ppsInstance)->lDescriptor & ( ABP_ASM_IA_DESC_WRITE_READ_MASK | ABP_ASM_IA_DESC_PD_MAPPABLE_MASK ) ) ==
                 ( ABP_ASM_IA_DESC_READ | ABP_ASM_IA_DESC_PD_MAPPABLE ) )
             {
+               if( ( iRspSize + ABP_UINT16_SIZEOF ) > ABCC_GetMaxMessageSize() )
+               {
+                  break;
+               }
+
                ABCC_SetMsgData16( psNewMessage,
                                   iIndex + 1,
                                   iRspSize );
@@ -637,6 +663,22 @@ static void ObjectCommand( ABP_MsgType* psNewMessage )
             }
 
             ppsInstance++;
+         }
+
+         /*
+         ** The loop only exits early when the next instance number doesn't
+         ** fit in the response message.
+         */         
+         if( iIndex < ABCC_API_CbfGetNumAsmInstances() )
+         {
+            ABCC_LOG_WARNING( ABCC_EC_BAD_ASSEMBLY_INSTANCE, (UINT32)ABCC_GetMsgInstance( psNewMessage ),
+                              "Too many read PD mappable assembly instances for the current configuration of " \
+                              "ABCC_CFG_MAX_MSG_SIZE (%d) or message channel size too small (%" PRIu16 ")\n",
+                              ABCC_CFG_MAX_MSG_SIZE,
+                              ABCC_GetMessageChannelSize() );
+
+            ABP_SetMsgErrorResponse( psNewMessage, 1, ABP_ERR_MSG_CHANNEL_TOO_SMALL );
+            break;
          }
 
          ABP_SetMsgResponse( psNewMessage,
