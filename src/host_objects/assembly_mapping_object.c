@@ -783,30 +783,44 @@ BOOL ASM_GetData( UINT16 iInstance,
 
 void ASM_Init( void )
 {
-#if !ASM_SUPPORT_DYNAMIC_INSTANCES
    const ASM_InstanceType** ppsInstance;
    UINT16 iIndex;
 
    ppsInstance = ABCC_API_CbfGetAsmInstances();
 
-   /*
-   ** Verify that there are no dynamic assemblies.
-   */
    for( iIndex = 0; iIndex < ABCC_API_CbfGetNumAsmInstances(); iIndex++ )
    {
       if( ( (*ppsInstance)->lDescriptor & ( ABP_ASM_IA_DESC_STATIC_DYNAMIC_MASK ) ) ==
           ABP_ASM_IA_DESC_DYNAMIC )
       {
+#if ASM_SUPPORT_DYNAMIC_INSTANCES
+         /*
+         ** Start every dynamic assembly with an empty, terminated map so that
+         ** the map is never scanned past its storage. The map storage must
+         ** have room for the maximum number of ADI maps plus one entry for
+         ** the PD_END_MAP terminator.
+         */
+         if( (*ppsInstance)->psMap == NULL )
+         {
+            ABCC_LOG_ERROR( ABCC_EC_BAD_ASSEMBLY_INSTANCE,
+                            (UINT32)( iIndex + 1 ),
+                            "Dynamic assembly instance %" PRIu16 " has no map storage\n",
+                            (UINT16)( iIndex + 1 ) );
+         }
+         else
+         {
+            (*ppsInstance)->psMap[ 0 ].eDir = PD_END_MAP;
+         }
+#else
          ABCC_LOG_ERROR( ABCC_EC_BAD_ASSEMBLY_INSTANCE,
-   (UINT32)( iIndex + 1 ),
-
-            "Assembly instance %" PRIu16 " is defined as dynamic although not supported\n", iIndex + 1 );
-
+                         (UINT32)( iIndex + 1 ),
+                         "Assembly instance %" PRIu16 " is defined as dynamic although not supported\n",
+                         (UINT16)( iIndex + 1 ) );
+#endif
       }
 
       ppsInstance++;
    }
-#endif
 
    asm_sObject.iNumberOfInstances = ABCC_API_CbfGetNumAsmInstances();
    asm_sObject.iHighestInstanceNo = ABCC_API_CbfGetNumAsmInstances();
