@@ -270,6 +270,7 @@ static void InstanceCommand( ABP_MsgType* psNewMessage )
          UINT16 iAdisPerAttribute;
          UINT16 iMaxAdiMaps;
          UINT16 iMaxAdisForThisAttribute;
+         UINT16 iCurrentNumAdis;
          UINT16 iIndex;
          UINT16 iStartIndex;
          UINT16 iEndIndex;
@@ -350,6 +351,19 @@ static void InstanceCommand( ABP_MsgType* psNewMessage )
 
          iStartIndex = ( ( ABCC_GetMsgCmdExt0( psNewMessage ) - ABP_ASM_IA_ADI_MAP_XX ) * iAdisPerAttribute );
          iEndIndex   = iStartIndex + ( ABCC_GetMsgDataSize( psNewMessage ) / ABP_BITS32_SIZEOF );
+
+         /*
+         ** The ADI Map X attributes are consecutive pages of one map. A page
+         ** can only be written if all previous pages are filled, otherwise
+         ** the map would contain a gap of undefined entries.
+         */
+         iCurrentNumAdis = AD_GetNumAdisInMap( psInstance->psMap );
+
+         if( iStartIndex > iCurrentNumAdis )
+         {
+            ABP_SetMsgErrorResponse( psNewMessage, 1, ABP_ERR_INV_STATE );
+            break;
+         }
 
          iOctetOffset = 0;
 
@@ -469,9 +483,19 @@ static void InstanceCommand( ABP_MsgType* psNewMessage )
          }
 
          /*
-         ** Finalize the ADI map by indicating end of mapping.
+         ** Finalize the ADI map by indicating end of mapping. A completely
+         ** filled page keeps any mappings in later pages, while a partially
+         ** filled page ends the map.
          */
-         psInstance->psMap[ iIndex ].eDir = PD_END_MAP;
+         if( ( ( iEndIndex - iStartIndex ) == iMaxAdisForThisAttribute ) &&
+             ( iCurrentNumAdis > iEndIndex ) )
+         {
+            psInstance->psMap[ iCurrentNumAdis ].eDir = PD_END_MAP;
+         }
+         else
+         {
+            psInstance->psMap[ iEndIndex ].eDir = PD_END_MAP;
+         }
 
          ABP_SetMsgResponse( psNewMessage, 0 );
       }
