@@ -206,7 +206,21 @@ static void InstanceCommand( ABP_MsgType* psNewMessage )
                ** Convert internal representation for all elements to the
                ** actual number of elements.
                */
-               bNumElem = AD_GetAdiInstEntry( psInstance->psMap[ iIndex ].iInstance )->bNumOfElements;
+               const AD_AdiEntryType* psAdiEntry =
+                  AD_GetAdiInstEntry( psInstance->psMap[ iIndex ].iInstance );
+
+               if( psAdiEntry == NULL )
+               {
+                  ABCC_LOG_WARNING( ABCC_EC_BAD_ASSEMBLY_INSTANCE, (UINT32)ABCC_GetMsgInstance( psNewMessage ),
+                                    "ADI %" PRIu16 " in assembly mapping instance %" PRIu16 " does not exist\n",
+                                    psInstance->psMap[ iIndex ].iInstance,
+                                    ABCC_GetMsgInstance( psNewMessage ) );
+
+                  ABP_SetMsgErrorResponse( psNewMessage, 1, ABP_ERR_OUT_OF_RANGE );
+                  return;
+               }
+
+               bNumElem = psAdiEntry->bNumOfElements;
                bStartIndex = 0;
             }
             else
@@ -690,8 +704,10 @@ void ASM_Init( void )
           ABP_ASM_IA_DESC_DYNAMIC )
       {
          ABCC_LOG_ERROR( ABCC_EC_BAD_ASSEMBLY_INSTANCE,
-   (UINT32)( iIndex + 1 ),
-            "Assembly instance %" PRIu16 " is defined as dynamic although not supported\n", iIndex + 1 );
+   (UINT32)( iIndex + 1 ),
+
+            "Assembly instance %" PRIu16 " is defined as dynamic although not supported\n", iIndex + 1 );
+
       }
 
       ppsInstance++;
