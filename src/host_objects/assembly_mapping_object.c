@@ -188,6 +188,8 @@ static void InstanceCommand( ABP_MsgType* psNewMessage )
                               ABCC_GetMessageChannelSize(),
                               iNumAdisInAttribute * ABP_BITS32_SIZEOF );
 
+            ABP_SetMsgErrorResponse( psNewMessage, 1, ABP_ERR_MSG_CHANNEL_TOO_SMALL );
+
             break;
          }
 
