@@ -760,7 +760,7 @@ static void ObjectCommand( ABP_MsgType* psNewMessage )
    } /* End of switch( Command number ) */
 }
 
-EXTFUNC BOOL ASM_GetData( UINT16 iInstance,
+BOOL ASM_GetData( UINT16 iInstance,
                           void* pxBuffer,
                           UINT16* piOctetOffset )
 {
